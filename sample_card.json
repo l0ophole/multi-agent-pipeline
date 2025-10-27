@@ -1,0 +1,21 @@
+{
+  "id": "char-001",
+  "name": "Asha Calder",
+  "appearance": {
+    "height": "5'6\"",
+    "hair": "short black",
+    "eyes": "hazel",
+    "style": "practical, worn leather jacket"
+  },
+  "personality": {
+    "traits": ["curious", "stubborn"],
+    "motivations": "uncover the truth behind the missing relic",
+    "quips": ["I prefer action over questions."]
+  },
+  "background": "Grew up in a port town, apprenticed as an archivist.",
+  "skills": [
+    {"name": "lockpicking", "level": 3},
+    {"name": "research", "level": 4}
+  ],
+  "dialogue_style": {"sentence_length":"short","vocabulary":"neutral","tone":"wry"}
+}

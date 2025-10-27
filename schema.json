@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Character Card",
+  "type": "object",
+  "required": ["id", "name", "appearance", "personality", "background", "skills"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "appearance": {
+      "type": "object",
+      "properties": {
+        "height": { "type": "string" },
+        "hair": { "type": "string" },
+        "eyes": { "type": "string" },
+        "style": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "personality": {
+      "type": "object",
+      "properties": {
+        "traits": { "type": "array", "items": { "type": "string" } },
+        "motivations": { "type": "string" },
+        "quips": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "background": { "type": "string" },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "level"],
+        "properties": {
+          "name": { "type": "string" },
+          "level": { "type": "number" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "dialogue_style": {
+      "type": "object",
+      "properties": {
+        "sentence_length": { "enum": ["short","medium","long"] },
+        "vocabulary": { "enum": ["simple","neutral","complex"] },
+        "tone": { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": true
+}
