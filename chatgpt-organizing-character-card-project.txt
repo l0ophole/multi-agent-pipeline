@@ -35,7 +35,7 @@ Sends it to a large language model (LLM) via OpenRouter.
 
 Modifies it based on prompts.
 
-Then exports the updated JSON.
+Then exports the updated js.
 
 
 
@@ -171,7 +171,7 @@ Adjust temperament, quirks, strengths, flaws.
 “Modify the personality attributes to make them more distinctive and consistent with the backstory.”
 Appearance Agent
 Focus on physical traits and clothing style.
-“Refine the appearance details in the JSON. Add descriptive, vivid language while keeping it realistic.”
+“Refine the appearance details in the js. Add descriptive, vivid language while keeping it realistic.”
 Skills & Abilities Agent
 Update abilities, proficiencies, or powers.
 “Ensure the listed abilities are balanced, interesting, and fit the character’s world context.”
@@ -193,14 +193,14 @@ Validate schema (ensure all required keys exist).
 
 Send to Agents (Sequentially or in Parallel)
 Each agent receives:
-The current version of the JSON.
+The current version of the js.
 
 Its system prompt (as above).
 
 Use the OpenRouter API (requests library) to send requests.
 
 Collect and Integrate Responses
-Parse the returned text as JSON.
+Parse the returned text as js.
 
 Validate and merge changes (overwrite or merge intelligently).
 
@@ -224,14 +224,14 @@ def call_openrouter(agent_name, system_prompt, character_data):
         "model": "gpt-4o-mini",
         "messages": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": json.dumps(character_data)}
+            {"role": "user", "content": js.dumps(character_data)}
         ]
     }
     response = requests.post("https://openrouter.ai/api/v1/chat/completions", 
                              headers={"Authorization": "Bearer YOUR_API_KEY"},
                              json=payload)
     result = response.json()["choices"][0]["message"]["content"]
-    return json.loads(result)
+    return js.loads(result)
 
 # Agent sequence
 agents = [
@@ -244,13 +244,13 @@ agents = [
 ]
 
 with open("CharacterCard.json") as f:
-    character = json.load(f)
+    character = js.load(f)
 
 for name, prompt in agents:
     character = call_openrouter(name, prompt, character)
 
 with open("CharacterCard_Final.json", "w") as f:
-    json.dump(character, f, indent=2)
+    js.dump(character, f, indent=2)
 
 
 
@@ -435,7 +435,7 @@ def call_openrouter(system_prompt: str, user_payload: dict, model: str = "gpt-4o
     }
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": json.dumps(user_payload)}
+        {"role": "user", "content": js.dumps(user_payload)}
     ]
     payload = {"model": model, "messages": messages, "max_tokens": 1200}
     r = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=timeout)
@@ -473,7 +473,7 @@ def run_agent(agent_key: str, character: dict):
     # instruct model to provide JSON; additional safety wrapper can be added
     resp_text = call_openrouter(prompt, character)
     # parse response into JSON - defensive code here
-    return json.loads(resp_text)
+    return js.loads(resp_text)
 
 Note: instruct the model to return a JSON patch (small JSON with only the keys the agent modifies). This makes integration simple.
 
@@ -488,7 +488,7 @@ import json
 
 def load_schema(path="schema.json"):
     with open(path) as f:
-        return json.load(f)
+        return js.load(f)
 
 schema = load_schema()
 
@@ -518,7 +518,7 @@ def compute_diff(before: dict, after: dict):
 
 def pretty_print_diff(diff):
     import json
-    print(json.dumps(diff, indent=2))
+    print(js.dumps(diff, indent=2))
 
 
 
@@ -536,7 +536,7 @@ AGENT_SEQUENCE = ["background", "personality", "appearance", "skills", "narrativ
 
 def orchestrate_sync(input_path, output_path, verbose=True):
     with open(input_path) as f:
-        card = json.load(f)
+        card = js.load(f)
 
     is_valid, err = validate_card(card)
     if not is_valid:
@@ -585,7 +585,7 @@ def orchestrate_sync(input_path, output_path, verbose=True):
         raise ValueError(f"Final card invalid: {err}")
 
     with open(output_path, "w") as f:
-        json.dump(current, f, indent=2)
+        js.dump(current, f, indent=2)
 
     return current, change_log
 
@@ -615,7 +615,7 @@ async def async_call(system_prompt, char):
 
 async def orchestrate_async(input_path, output_path):
     with open(input_path) as f:
-        card = json.load(f)
+        card = js.load(f)
     valid, err = validate_card(card)
     if not valid:
         raise ValueError(err)
@@ -644,7 +644,7 @@ async def orchestrate_async(input_path, output_path):
             if isinstance(result, Exception):
                 change_log.append({"agent": agent, "status": "failed", "error": str(result)})
                 continue
-            patch = json.loads(result)
+            patch = js.loads(result)
             # merge
             def deep_update(d, u):
                 for k, v in u.items():
@@ -662,7 +662,7 @@ async def orchestrate_async(input_path, output_path):
                 change_log.append({"agent": agent, "status": "applied", "diff": diff})
 
     with open(output_path, "w") as f:
-        json.dump(current, f, indent=2)
+        js.dump(current, f, indent=2)
     return current, change_log
 
 Important: true concurrent HTTP calls require aiohttp or similar. The above uses run_in_executor as an easy path if you keep the blocking call.
@@ -708,8 +708,8 @@ def index():
         f.save(path)
         out = os.path.join(UPLOAD_FOLDER, "out_" + f.filename)
         card, change_log = orchestrate_sync(path, out)
-        result = json.dumps(card, indent=2)
-        changelog = json.dumps(change_log, indent=2)
+        result = js.dumps(card, indent=2)
+        changelog = js.dumps(change_log, indent=2)
     return render_template_string(INDEX_HTML, result=result, changelog=changelog)
 
 if __name__ == "__main__":
@@ -741,7 +741,7 @@ import json
 
 def test_sample_valid():
     with open("sample_card.json") as f:
-        c = json.load(f)
+        c = js.load(f)
     valid, err = validate_card(c)
     assert valid
 
@@ -779,7 +779,7 @@ Add agent trust weighting so that if two agents propose conflicting changes you 
 
 Use vector embeddings to store prior character versions and retrieve context for longer-running characters across sessions.
 
-Build a GUI editor that lets a human accept/reject each agent change before writing the final JSON.
+Build a GUI editor that lets a human accept/reject each agent change before writing the final js.
 
 
 
@@ -791,7 +791,7 @@ Create virtualenv and install requirements.txt.
 
 Create OPENROUTER_API_KEY env var: export OPENROUTER_API_KEY="sk-..."
 
-Populate sample_card.json and schema.json.
+Populate sample_card.json and schema.js.
 
 Implement openrouter_client.call_openrouter with correct URL/response parsing. Test by mocking it first.
 
@@ -926,7 +926,7 @@ def call_openrouter(system_prompt: str, user_payload: dict, model: str = "gpt-4o
     }
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": json.dumps(user_payload)}
+        {"role": "user", "content": js.dumps(user_payload)}
     ]
     payload = {"model": model, "messages": messages, "max_tokens": 1200}
     r = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=timeout)
@@ -951,13 +951,13 @@ AGENTS = {
 def run_agent(agent_key: str, character: dict):
     prompt = AGENTS[agent_key]
     resp_text = call_openrouter(prompt, character)
-    return json.loads(resp_text)
+    return js.loads(resp_text)
 """,
     "validator.py": """import jsonschema, json
 
 def load_schema(path="schema.json"):
     with open(path) as f:
-        return json.load(f)
+        return js.load(f)
 
 schema = load_schema()
 
@@ -984,7 +984,7 @@ AGENT_SEQUENCE = ["background", "personality", "appearance", "skills", "narrativ
 
 def orchestrate_sync(input_path, output_path, verbose=True):
     with open(input_path) as f:
-        card = json.load(f)
+        card = js.load(f)
     valid, err = validate_card(card)
     if not valid:
         raise ValueError(f"Invalid input: {err}")
@@ -1018,7 +1018,7 @@ def orchestrate_sync(input_path, output_path, verbose=True):
             print(f"Applied {agent}. Diff keys: {list(diff.keys())}")
 
     with open(output_path, "w") as f:
-        json.dump(current, f, indent=2)
+        js.dump(current, f, indent=2)
     return current, change_log
 """,
     "app.py": """from flask import Flask, request, render_template_string
@@ -1054,8 +1054,8 @@ def index():
         f.save(path)
         out = os.path.join(UPLOAD_FOLDER, 'out_' + f.filename)
         card, log = orchestrate_sync(path, out)
-        result = json.dumps(card, indent=2)
-        changelog = json.dumps(log, indent=2)
+        result = js.dumps(card, indent=2)
+        changelog = js.dumps(log, indent=2)
     return render_template_string(HTML, result=result, changelog=changelog)
 
 if __name__ == '__main__':
@@ -1310,7 +1310,7 @@ Then in orchestrate_sync:
 
 
 with open(input_path) as f:
-    card = json.load(f)
+    card = js.load(f)
 
 card = normalize_card(card)  # <--- Add this line
 
@@ -1626,7 +1626,7 @@ Then right after you load the JSON in orchestrate_sync, call it:
 
 
 with open(input_path) as f:
-    card = json.load(f)
+    card = js.load(f)
 
 card = normalize_card(card)  # <-- add this line
 
@@ -1641,10 +1641,10 @@ If you want the output JSON to still include your original metadata, you can add
 if "_original" in current:
     current["_original"]["updated_card"] = current
     with open(output_path, "w") as f:
-        json.dump(current["_original"], f, indent=2)
+        js.dump(current["_original"], f, indent=2)
 else:
     with open(output_path, "w") as f:
-        json.dump(current, f, indent=2)
+        js.dump(current, f, indent=2)
 
 
 That way you preserve your original spec, creator_notes, and all the Jade-specific context.
@@ -1716,12 +1716,12 @@ Let’s decode what it means:
 That specific Python error comes from this line:
 
 
-json.loads(resp_text)
+js.loads(resp_text)
 
 
 and it means:
 
-the resp_text returned by the OpenRouter call was empty ("") or not valid JSON.
+the resp_text returned by the OpenRouter call was empty ("") or not valid js.
 
 So:
 
@@ -1762,7 +1762,7 @@ def run_agent(agent_key: str, character: dict):
         if start == -1 or end == 0:
             raise ValueError(f"Response not JSON: {resp_text[:200]}")
         cleaned = resp_text[start:end]
-        return json.loads(cleaned)
+        return js.loads(cleaned)
     except Exception as e:
         raise ValueError(f"Invalid JSON from agent '{agent_key}': {e}\nRaw output:\n{resp_text}")
 
@@ -1770,7 +1770,7 @@ def run_agent(agent_key: str, character: dict):
 This will:
 
 
-Catch cases where the model outputs non-JSON.
+Catch cases where the model outputs non-js.
 
 Try to extract a JSON substring even if it wraps commentary around it.
 
@@ -1781,7 +1781,7 @@ Show you what the raw response was if it fails again.
 Step 2 — Strengthen the System Prompts
 
 
-The current system prompts don’t force the model to reply strictly in JSON.
+The current system prompts don’t force the model to reply strictly in js.
 Update the ones in AGENTS (still in agents.py) to end with this instruction:
 
 
@@ -1863,7 +1863,7 @@ Agent dialogue failed: OpenRouter call failed: Expecting value: line 1 column 1 
 127.0.0.1 - - [27/Oct/2025 01:30:23] "POST / HTTP/1.1" 200 -
 
 ## Response:
-Perfect — your debug logs tell us the program is running normally (no crashes), but the OpenRouter endpoint itself is returning empty responses (""), which causes the json.loads() failure.
+Perfect — your debug logs tell us the program is running normally (no crashes), but the OpenRouter endpoint itself is returning empty responses (""), which causes the js.loads() failure.
 
 
 Let’s go over exactly what’s happening and how to fix it cleanly.
@@ -2229,7 +2229,7 @@ Traceback (most recent call last):
     return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/rpf/code/ai_multi_agent/app.py", line 35, in index
-    changelog = json.dumps(log, indent=2)
+    changelog = js.dumps(log, indent=2)
                 ^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/home/rpf/.local/share/uv/python/cpython-3.12.11-linux-x86_64-gnu/lib/python3.12/json/init.py", line 238, in dumps
     **kw).encode(obj)
@@ -2326,7 +2326,7 @@ def run_agent(agent_key: str, character: dict, retries=2):
             start = resp_text.find("{")
             end = resp_text.rfind("}") + 1
             cleaned = resp_text[start:end]
-            return json.loads(cleaned)
+            return js.loads(cleaned)
         except Exception as e:
             if attempt < retries:
                 print(f"[WARN] Agent {agent_key} failed, retrying ({attempt+1}/{retries})...")
@@ -2348,10 +2348,10 @@ TypeError: Object of type SetOrdered is not JSON serializable
 That’s from this line in your Flask app:
 
 
-changelog = json.dumps(log, indent=2)
+changelog = js.dumps(log, indent=2)
 
 
-and happens because DeepDiff returns some internal objects (like SetOrdered) that json.dumps() doesn’t understand.
+and happens because DeepDiff returns some internal objects (like SetOrdered) that js.dumps() doesn’t understand.
 
 
 
@@ -2374,11 +2374,11 @@ def compute_diff(before: dict, after: dict):
             return str(obj)
         except Exception:
             return repr(obj)
-    return json.loads(json.dumps(dd, default=make_json_safe))
+    return js.loads(js.dumps(dd, default=make_json_safe))
 
 
 That forces DeepDiff’s internal structures to become normal JSON-safe dicts and strings.
-Once you do this, json.dumps(log, indent=2) in your Flask app will work without errors.
+Once you do this, js.dumps(log, indent=2) in your Flask app will work without errors.
 
 
 

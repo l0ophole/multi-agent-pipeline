@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template_string
-import json, os
+import json as js
+import os
 from orchestrator import orchestrate_sync
 
 app = Flask(__name__)
@@ -31,8 +32,8 @@ def index():
         f.save(path)
         out = os.path.join(UPLOAD_FOLDER, 'out_' + f.filename)
         card, log = orchestrate_sync(path, out)
-        result = json.dumps(card, indent=2)
-        changelog = json.dumps(log, indent=2)
+        result = js.dumps(card, indent=2)
+        changelog = js.dumps(log, indent=2)
     return render_template_string(HTML, result=result, changelog=changelog)
 
 if __name__ == '__main__':

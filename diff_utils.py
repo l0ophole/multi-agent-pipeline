@@ -11,4 +11,4 @@ def compute_diff(before: dict, after: dict):
             return str(obj)
         except Exception:
             return repr(obj)
-    return json.loads(json.dumps(dd, default=make_json_safe))
+    return js.loads(js.dumps(dd, default=make_json_safe))

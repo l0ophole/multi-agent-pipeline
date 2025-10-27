@@ -1,6 +1,7 @@
 from typing import Dict
 from openrouter_client import call_openrouter
-import json
+import json as js
+import time
 
 AGENTS = {
     "background": "You are a writer who improves character backstories. Return only JSON patch updating 'background'. Return only valid JSON with no commentary or explanations.",
@@ -22,10 +23,6 @@ for d in updates:
         print(f"[update] AGENTS[{k}] = {v}")
         AGENTS[k] = v
 
-import json
-from openrouter_client import call_openrouter
-import time
-
 def run_agent(agent_key: str, character: dict, retries=2):
     prompt = AGENTS[agent_key]
     for attempt in range(retries + 1):
@@ -36,7 +33,7 @@ def run_agent(agent_key: str, character: dict, retries=2):
             start = resp_text.find("{")
             end = resp_text.rfind("}") + 1
             cleaned = resp_text[start:end]
-            return json.loads(cleaned)
+            return js.loads(cleaned)
         except Exception as e:
             if attempt < retries:
                 print(f"[WARN] Agent {agent_key} failed, retrying ({attempt+1}/{retries})...")

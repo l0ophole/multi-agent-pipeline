@@ -11,6 +11,7 @@ def normalize_card(card):
     Unifies different card formats so validation and agents can handle them.
     Returns a standardized card with id, name, personality, etc.
     """
+    import json as js
     # Case 1: full spec wrapper (like {"spec":"chara_card_v2", "data":{...}})
     if "data" in card:
         card = card["data"]
@@ -48,6 +49,7 @@ def normalize_card(card):
 
 
 def orchestrate_sync(input_path, output_path, verbose=True):
+    import json as js
     with open(input_path) as f:
         card = js.load(f)
     card = normalize_card(card)  # <--- Add this line
@@ -81,7 +83,7 @@ def orchestrate_sync(input_path, output_path, verbose=True):
         diff = compute_diff(before, current)
 
         # change_log.append({"agent": agent, "status": "applied", "diff": diff})
-        import json
+        
 
         try:
             diff_json = js.loads(js.dumps(diff, default=str))

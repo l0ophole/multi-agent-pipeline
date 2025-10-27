@@ -1,8 +1,9 @@
-import jsonschema, json
+import jsonschema
+import json as js
 
 def load_schema(path="schema.json"):
     with open(path) as f:
-        return json.load(f)
+        return js.load(f)
 
 schema = load_schema()
 

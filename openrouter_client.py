@@ -13,43 +13,93 @@ API_KEY = OPENROUTER_API_KEY
 class OpenRouterError(Exception):
     pass
 
-def call_openrouter(system_prompt: str, user_payload: dict, model: str = 'deepseek/deepseek-chat-v3-0324', timeout=30):
+import os
+import json as js
+import requests
+
+class Requests:
+    def __init__(self, logfile='20251027.log'):
+        self.logfile = logfile
+
+    def log_post(self, *args, **kwargs):
+        p_dict = {'requests_type': 'post',
+                  'args': args,
+                  'kwargs': kwargs}
+        
+        print(f"[log_post] {js.dumps(p_dict)}")
+
+        with open(self.logfile, 'a') as f:
+            f.write(js.dumps(p_dict))
+
+    def log_response(self, r_dict):
+        
+        print(f"[log_response] {js.dumps(r_dict)}")
+        
+        with open(self.logfile, 'a') as f:
+            f.write(js.dumps(r_dict))
+
+
+    def post(self, *args, **kwargs):
+        import requests
+        r = requests.post(args, kwargs)
+        self.log_post(args, kwargs)
+        r_dict = {'requests_type': 'response',
+                  'ok': r.ok,
+                  'status_code': r.status_code,
+                  'reason': r.reason,
+                  'content': r.content}
+        self.log_response(r_dict)
+
+
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+# API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+class OpenRouterError(Exception):
+    pass
+
+def call_openrouter(system_prompt: str,
+                    user_payload: dict,
+                    model: str = "deepseek/deepseek-chat-v3-0324",
+                    timeout=30):
+
+    if not API_KEY:
+        raise OpenRouterError("Missing OPENROUTER_API_KEY environment variable.")
+
     headers = {
         "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
+
+    # ✅ DO NOT double-dump JSON
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": js.dumps(user_payload)}
+        {"role": "user", "content": user_payload},  # pass as dict, not string
     ]
-    payload = {"model": model, "messages": messages, "max_tokens": 1200}
-    print(f"[DEBUG] user_payload={js.dumps(user_payload, indent=4)}")
-    print(f"[DEBUG] payload={js.dumps(payload, indent=4)}")
 
-    print(f"[DEBUG] Sending to OpenRouter: {system_prompt[:50]}...")
-    print(f"[DEBUG] Payload keys: {list(user_payload.keys())}")
+    payload = {
+        "model": model,
+        "messages": messages,
+        "max_tokens": 1200,
+    }
 
-    r = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=timeout)
+    print(f"[DEBUG] payload={js.dumps(payload, indent=4)[:500]}")  # optional debug
 
-    raw_response = r.text.strip().rstrip('\n')
-    
-    ok = r.ok
-    status_code = r.status_code
-    reason = r.reason
-    content = r.content.strip().rstrip('\n')
-    text = r.text.strip().rstrip('\n')
+    try:
+        r = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=timeout)
+    except Exception as e:
+        raise OpenRouterError(f"HTTP request failed: {e}")
 
-    print(f"[RESPONSE] OK: {ok} STATUS_CODE={status_code} REASON={reason} LEN_CONTENT={len(content)} LEN_TEXT={len(text)}")
-
-    print(f"[DEBUG] Raw HTTP response text: {raw_response}")
-
-    print(f"[DEBUG] Raw HTTP response text: {r.text[:500]}")
-    
     if not r.ok:
-        raise OpenRouterError(f"OpenRouter error {r.status_code}: {r.text}")
-    
+        raise OpenRouterError(f"OpenRouter returned {r.status_code}: {r.text}")
+
     try:
         resp = r.json()
+    except Exception as e:
+        print(f"[DEBUG] Raw HTTP response text: {r.text[:500]}")
+        raise OpenRouterError(f"Invalid JSON response: {e}")
+
+    try:
         return resp["choices"][0]["message"]["content"]
-    except Exception:
-        raise RuntimeError(f"Unexpected non-JSON response ({r.status_code}): {r.text[:400]}")
+    except KeyError:
+        raise OpenRouterError(f"Malformed response: {resp}")
+
