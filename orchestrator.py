@@ -78,7 +78,17 @@ def orchestrate_sync(input_path, output_path, verbose=True):
             change_log.append({"agent": agent, "status": "reverted", "error": err})
             continue
         diff = compute_diff(before, current)
-        change_log.append({"agent": agent, "status": "applied", "diff": diff})
+
+        # change_log.append({"agent": agent, "status": "applied", "diff": diff})
+        import json
+
+        try:
+            diff_json = json.loads(json.dumps(diff, default=str))
+        except Exception:
+            diff_json = {"note": "diff not serializable", "raw_type": str(type(diff))}
+
+        change_log.append({"agent": agent, "status": "applied", "diff": diff_json})
+
         if verbose:
             print(f"Applied {agent}. Diff keys: {list(diff.keys())}")
 

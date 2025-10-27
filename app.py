@@ -37,3 +37,9 @@ def index():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
+# Summary of what to do next
+# (1.) Update endpoint → ✅ already done.
+# (2.) Strengthen prompts for appearance/skills/dialogue → needed.
+# (3.) Patch diff_json serialization → needed.
+# (4.) Restart Flask → python app.py.

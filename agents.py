@@ -11,6 +11,17 @@ AGENTS = {
     "dialogue": "Modify dialogue_style to match personality. Output patch for 'dialogue_style'. Return only valid JSON with no commentary or explanations."
 }
 
+# attempt to solve the empty response from the LLM
+updates = [{"appearance": "Refine the appearance details of this character card. Return only a JSON object with the updated 'appearance' key. No extra text."},
+           {"skills": "Enhance and balance the 'skills' section. Return only a JSON object containing 'skills'."},
+           {"dialogue": "Modify 'dialogue_style' to fit personality. Return only a JSON object with 'dialogue_style'."}]
+
+for d in updates:
+    for (k, v) in d.items():
+# for (k, v) in updates.items():
+        print(f"[update] AGENTS[{k}] = {v}")
+        AGENTS[k] = v
+
 import json
 from openrouter_client import call_openrouter
 import time
