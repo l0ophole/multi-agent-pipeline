@@ -1,4 +1,5 @@
-import json, copy
+import json as js
+import copy
 from agents import run_agent
 from validator import validate_card
 from diff_utils import compute_diff
@@ -48,7 +49,7 @@ def normalize_card(card):
 
 def orchestrate_sync(input_path, output_path, verbose=True):
     with open(input_path) as f:
-        card = json.load(f)
+        card = js.load(f)
     card = normalize_card(card)  # <--- Add this line
     valid, err = validate_card(card)
     if not valid:
@@ -83,7 +84,7 @@ def orchestrate_sync(input_path, output_path, verbose=True):
         import json
 
         try:
-            diff_json = json.loads(json.dumps(diff, default=str))
+            diff_json = js.loads(js.dumps(diff, default=str))
         except Exception:
             diff_json = {"note": "diff not serializable", "raw_type": str(type(diff))}
 
@@ -93,5 +94,5 @@ def orchestrate_sync(input_path, output_path, verbose=True):
             print(f"Applied {agent}. Diff keys: {list(diff.keys())}")
 
     with open(output_path, "w") as f:
-        json.dump(current, f, indent=2)
+        js.dump(current, f, indent=2)
     return current, change_log
