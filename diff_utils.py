@@ -1,7 +1,6 @@
-from deepdiff import DeepDiff
-import json
-
 def compute_diff(before: dict, after: dict):
+    from deepdiff import DeepDiff
+    import json as js
     dd = DeepDiff(before, after, significant_digits=5, ignore_order=True)
     # Convert to plain JSON-safe dictionary
     def make_json_safe(obj):

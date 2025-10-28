@@ -3,12 +3,12 @@ import json as js
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-from config.settings import OPENROUTER_API_KEY
+# from config.settings import OPENROUTER_API_KEY
 
-API_KEY = OPENROUTER_API_KEY
+# API_KEY = OPENROUTER_API_KEY
 # API_MODEL = 'deepseek/deepseek-chat-v3-0324'
 # "deepseek/deepseek-r1-0528"
-# API_KEY = os.getenv("OPENROUTER_API_KEY")
+API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 class OpenRouterError(Exception):
     pass
@@ -26,14 +26,14 @@ class Requests:
                   'args': args,
                   'kwargs': kwargs}
         
-        print(f"[log_post] {js.dumps(p_dict)}")
+        # print(f"[log_post] {js.dumps(p_dict)}")
 
         with open(self.logfile, 'a') as f:
             f.write(js.dumps(p_dict))
 
     def log_response(self, r_dict):
         
-        print(f"[log_response] {js.dumps(r_dict)}")
+        # print(f"[log_response] {js.dumps(r_dict)}")
         
         with open(self.logfile, 'a') as f:
             f.write(js.dumps(r_dict))
@@ -73,7 +73,7 @@ def call_openrouter(system_prompt: str,
     # ✅ DO NOT double-dump JSON
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_payload},  # pass as dict, not string
+        {"role": "user", "content": js.dumps(user_payload, ensure_ascii=False)},  # pass as dict, not string
     ]
 
     payload = {
@@ -82,7 +82,9 @@ def call_openrouter(system_prompt: str,
         "max_tokens": 1200,
     }
 
-    print(f"[DEBUG] payload={js.dumps(payload, indent=4)[:500]}")  # optional debug
+    # print(f"[DEBUG] Authorization header: {headers['Authorization'][:20]}...")  # safe truncation
+
+    # print(f"[DEBUG] payload={js.dumps(payload, indent=4)[:500]}")  # optional debug
 
     try:
         r = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=timeout)

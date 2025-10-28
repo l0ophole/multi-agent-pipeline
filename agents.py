@@ -19,8 +19,6 @@ updates = [{"appearance": "Refine the appearance details of this character card.
 
 for d in updates:
     for (k, v) in d.items():
-# for (k, v) in updates.items():
-        print(f"[update] AGENTS[{k}] = {v}")
         AGENTS[k] = v
 
 def run_agent(agent_key: str, character: dict, retries=2):
