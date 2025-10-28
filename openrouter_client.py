@@ -1,46 +1,51 @@
-import os, requests
+import os
+import requests
 import json as js
+import dotenv
+
+env_loaded = dotenv.load_dotenv(".env")
+
+if env_loaded is True:
+    env_msg = 'env loaded'
+else:
+    env_msg = 'failed'
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-
-# from config.settings import OPENROUTER_API_KEY
-
-# API_KEY = OPENROUTER_API_KEY
-# API_MODEL = 'deepseek/deepseek-chat-v3-0324'
-# "deepseek/deepseek-r1-0528"
 API_KEY = os.getenv("OPENROUTER_API_KEY")
+DEBUG = os.getenv("DEBUG")
+
+if DEBUG is None:
+    DEBUG = False
+
+if DEBUG:
+    print(f"DEBUG: load_dotenv('.env'): {env_msg}")
 
 class OpenRouterError(Exception):
     pass
 
-import os
-import json as js
-import requests
-
 class Requests:
-    def __init__(self, logfile='20251027.log'):
+    def __init__(self, logfile=None, debug=False):
         self.logfile = logfile
+        self.debug = debug
 
     def log_post(self, *args, **kwargs):
         p_dict = {'requests_type': 'post',
                   'args': args,
                   'kwargs': kwargs}
-        
-        # print(f"[log_post] {js.dumps(p_dict)}")
-
-        with open(self.logfile, 'a') as f:
-            f.write(js.dumps(p_dict))
+        if self.debug is True:
+            print(f"[log_post] {js.dumps(p_dict)}")
+        if self.logfile is not None:
+            with open(self.logfile, 'a') as f:
+                f.write(js.dumps(p_dict))
 
     def log_response(self, r_dict):
-        
-        # print(f"[log_response] {js.dumps(r_dict)}")
-        
-        with open(self.logfile, 'a') as f:
-            f.write(js.dumps(r_dict))
-
+        if self.debug is True:
+            print(f"[log_response] {js.dumps(r_dict)}")
+        if self.logfile is not None:
+            with open(self.logfile, 'a') as f:
+                f.write(js.dumps(r_dict))
 
     def post(self, *args, **kwargs):
-        import requests
         r = requests.post(args, kwargs)
         self.log_post(args, kwargs)
         r_dict = {'requests_type': 'response',
@@ -49,13 +54,6 @@ class Requests:
                   'reason': r.reason,
                   'content': r.content}
         self.log_response(r_dict)
-
-
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-# API_KEY = os.getenv("OPENROUTER_API_KEY")
-
-class OpenRouterError(Exception):
-    pass
 
 def call_openrouter(system_prompt: str,
                     user_payload: dict,
@@ -81,27 +79,31 @@ def call_openrouter(system_prompt: str,
         "messages": messages,
         "max_tokens": 1200,
     }
-
-    # print(f"[DEBUG] Authorization header: {headers['Authorization'][:20]}...")  # safe truncation
-
-    # print(f"[DEBUG] payload={js.dumps(payload, indent=4)[:500]}")  # optional debug
+    
+    if DEBUG is True:
+        print(f"[DEBUG] Authorization header: {headers['Authorization'][:20]}...")  # safe truncation
+        print(f"[DEBUG] payload={js.dumps(payload, indent=4)[:500]}")  # optional debug
 
     try:
         r = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=timeout)
+
     except Exception as e:
         raise OpenRouterError(f"HTTP request failed: {e}")
 
-    if not r.ok:
+    if r.ok is not True:
         raise OpenRouterError(f"OpenRouter returned {r.status_code}: {r.text}")
 
     try:
         resp = r.json()
+
     except Exception as e:
         print(f"[DEBUG] Raw HTTP response text: {r.text[:500]}")
+        
         raise OpenRouterError(f"Invalid JSON response: {e}")
 
     try:
         return resp["choices"][0]["message"]["content"]
+
     except KeyError:
         raise OpenRouterError(f"Malformed response: {resp}")
 
